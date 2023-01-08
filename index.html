@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0 maximum-scale=1.0, user-scalable=no">
     <title>Urban octo</title>
     <style>
         .page-holder {
@@ -15,11 +15,24 @@
         .hands {
             display: flex;
             flex-wrap: wrap;
+            margin-bottom: 32px;
         }
 
         .hand {
             max-width: 500px;
             width: 300px;
+        }
+
+        .notice {
+            font-size: x-small;
+        }
+
+        button {
+            font-size: 20px;
+        }
+
+        body {
+            touch-action: manipulation;
         }
     </style>
 </head>
@@ -28,7 +41,6 @@
     <div class="page-holder">
         <h1>Urban octo</h1>
         <h2>Short description</h2>
-        <p id="day-label">Day X</p>
 
         <div class="hands">
             <svg id="left-hand" class="hand" viewBox="0 0 250 250" version="1.1" xmlns="http://www.w3.org/2000/svg">
@@ -44,16 +56,36 @@
                 <text x="120" y="240" font-size="30" text-anchor="middle" fill="black">RIGHT</text>
             </svg>
         </div>
-        <button type="button" onclick="setMarker()">Next</button>
+        <button type="button" onclick="next()">Next</button>
+        <button type="button" onclick="previous()">Previous</button>
+        <button type="reset" onclick="reset()">Reset</button>
+        <p class="notice">The position is saved in the browser local storage. Click on the <i>reset</i> button to reset.</p>
     </div>
 
     <script>
-        document.body.onload = setMarker;
+        document.body.onload = () => setMarker(load_current_position(), 0);
+        const position_key = "position"
 
-        let i = 0;
+        function load_current_position() {
+            const local_i = localStorage.getItem(position_key);
+            return (local_i && !isNaN(Number(local_i))) ? Number(local_i) : 0;
+        }
 
-        function setMarker() {
-            function getTodaysPosition() {
+        function next() {
+            setMarker(load_current_position(), 1);
+        }
+
+        function previous() {
+            setMarker(load_current_position(), -1);
+        }
+
+        function reset() {
+            localStorage.removeItem(position_key);
+            setMarker(0, 0);
+        }
+
+        function setMarker(current_position, delta) {
+            function getCurrentPosition(position_idx, delta = 0) {
                 const positions = [
                     ["10", "110", "left-hand"],
                     ["50", "50", "left-hand"],
@@ -81,12 +113,13 @@
                     ["200", "110", "right-hand"],
                 ]
 
-                const position = positions[i];
-                i = (i + 1) % positions.length;
+                const next_position_idx = Math.max((position_idx + delta) % positions.length, 0);
+                const position = positions[next_position_idx];
+                localStorage.setItem(position_key, ""+next_position_idx);
                 return position;
             }
 
-            const position = getTodaysPosition();
+            const position = getCurrentPosition(current_position, delta);
 
             const ref = document.getElementById(position[2]);
 
@@ -95,7 +128,6 @@
                 old_market[0].remove();
             }
             const marker = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-            //const market_attributes = document.createAttribute("cx=\"25\" cy=\"75\" r=\"20\"")
             marker.setAttribute("cx", position[0])
             marker.setAttribute("cy", position[1])
             marker.setAttribute("r", "10")
@@ -105,8 +137,6 @@
 
             ref.appendChild(marker);
         }
-
-        //setInterval(setMarker, 600);
     </script>
 </body>
 
